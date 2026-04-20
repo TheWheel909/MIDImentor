@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI Teacher Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar/Status Area -->
+        <header>
+            <div class="logo">
+                <span class="icon">🎹</span>
+                <h1>MIDITeacher <span class="pro-badge">PRO</span></h1>
+            </div>
+            <div class="device-status" id="device-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Scanning for MIDI devices...</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Initial Skill Question -->
+            <section id="skill-question-screen" class="glass selection-screen">
+                <h2>Welcome Back.</h2>
+                <p>Have you played the piano before?</p>
+                <div class="selection-cards">
+                    <div class="instrument-card" id="skill-no">
+                        <span class="card-icon">🆕</span>
+                        <h3>No, I'm new</h3>
+                        <p>Start from the absolute basics.</p>
+                    </div>
+                    <div class="instrument-card" id="skill-yes">
+                        <span class="card-icon">🎹</span>
+                        <h3>Yes, I have</h3>
+                        <p>We'll assess your level with AI.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recording Assessment Screen -->
+            <section id="assessment-screen" class="glass hidden">
+                <div class="calibration-header">
+                    <span class="category">AI ASSESSMENT</span>
+                    <h2 id="assessment-title">Show us your skills</h2>
+                    <p id="assessment-desc">Play the most difficult piece you know for 10 seconds.</p>
+                </div>
+                <div class="assessment-visual">
+                    <div class="timer-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" id="assessment-timer-path"></circle>
+                        </svg>
+                        <div id="assessment-timer-text">10s</div>
+                    </div>
+                </div>
+                <div id="assessment-status" class="status-msg">Waiting for first note...</div>
+            </section>
+
+            <!-- Startup Selection Screen -->
+            <section id="selection-screen" class="glass selection-screen hidden">
+                <h2>Welcome, musician.</h2>
+                <p>Choose your instrument to begin your journey.</p>
+                <div class="selection-cards">
+                    <div class="instrument-card" id="select-piano">
+                        <span class="card-icon">🎹</span>
+                        <h3>Piano</h3>
+                        <p>Master the keys with interactive lessons.</p>
+                    </div>
+                    <div class="instrument-card disabled" id="select-drums">
+                        <span class="card-icon">🥁</span>
+                        <h3>Drums</h3>
+                        <p>Coming soon: Rhythm and timing masterclass.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calibration Screen -->
+            <section id="calibration-screen" class="glass hidden">
+                <div class="calibration-header">
+                    <span class="category">CALIBRATION</span>
+                    <h2 id="cal-step-title">Middle C</h2>
+                    <p id="cal-step-desc">Press Middle C on your keyboard to calibrate.</p>
+                </div>
+                <div class="calibration-visual">
+                    <div class="note-indicator" id="cal-note-indicator">--</div>
+                </div>
+            </section>
+
+            <!-- Lesson Info Card -->
+            <section id="lesson-panel" class="lesson-panel glass hidden">
+                <div class="lesson-header">
+                    <span id="lesson-category" class="category">BEGINNER PIANO</span>
+                    <h2 id="lesson-title">Lesson 1: Middle C</h2>
+                    <p id="lesson-desc">Press the note highlighted in cyan on your keyboard.</p>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 10%;"></div>
+                </div>
+            </section>
+
+            <!-- Visualizer Area -->
+            <section id="visualizer" class="visualizer glass hidden">
+                <div id="piano-container" class="piano-roll">
+                    <!-- Piano keys will be generated here -->
+                </div>
+                <div id="drum-container" class="drum-pads hidden">
+                    <!-- Drum pads will be generated here -->
+                </div>
+            </section>
+
+            <!-- Feedback Area -->
+            <section id="feedback-panel" class="feedback-panel hidden">
+                <div id="midi-log" class="midi-log glass">
+                    <div class="log-entry system">Welcome to MIDITeacher. Please connect your instrument.</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="controls">
+                <button id="reset-app" class="btn secondary">Back to Menu</button>
+                <div class="spacer"></div>
+                <button id="next-lesson" class="btn primary hidden">Next Lesson</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

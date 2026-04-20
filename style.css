@@ -1,0 +1,421 @@
+:root {
+    --bg-color: #020617;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-color: #06b6d4;
+    --accent-glow: rgba(6, 182, 212, 0.4);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --success: #22c55e;
+    --error: #ef4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background: var(--bg-color);
+    color: var(--text-primary);
+    color-scheme: dark;
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Base Layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 2rem;
+    gap: 1.5rem;
+    background: radial-gradient(circle at top right, #1e1b4b, transparent),
+                radial-gradient(circle at bottom left, #0f172a, transparent);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.pro-badge {
+    font-size: 0.7rem;
+    background: var(--accent-color);
+    color: var(--bg-color);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+.device-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    border: 1px solid var(--glass-border);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--error);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--error);
+}
+
+.status-dot.connected {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+.status-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+main {
+    flex: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 1.5rem;
+}
+
+/* UI Components */
+.glass {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.lesson-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+#lesson-title {
+    font-size: 1.75rem;
+    margin: 0.25rem 0;
+}
+
+#lesson-desc {
+    color: var(--text-secondary);
+}
+
+.progress-container {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--accent-color);
+    box-shadow: 0 0 12px var(--accent-glow);
+    transition: width 0.3s ease;
+}
+
+/* Visualizer */
+.visualizer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+}
+
+.piano-roll {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 2rem;
+    justify-content: center;
+    align-items: flex-start; /* Hangs from top */
+}
+
+.key {
+    width: 40px;
+    height: 180px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 4px 4px; /* Rounded at bottom, flat at top */
+    position: relative;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s;
+}
+
+.key.black {
+    width: 24px;
+    height: 110px;
+    background: #111;
+    z-index: 2;
+    margin-left: -12px;
+    margin-right: -12px;
+    border-radius: 0 0 3px 3px; /* Rounded at bottom */
+}
+
+.key.target {
+    background: var(--accent-color);
+    box-shadow: 0 0 20px var(--accent-glow);
+    border-color: var(--accent-color);
+}
+
+.key.active {
+    background: #cbd5e1;
+    transform: translateY(2px) scaleY(0.98);
+    transform-origin: top; /* Pivot from the top */
+    filter: brightness(1.2);
+}
+
+.key.black.active {
+    background: #444;
+    transform: translateY(2px) scaleY(0.96);
+}
+
+.key.correct {
+    background: var(--success) !important;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.8) !important;
+    border-color: var(--success) !important;
+    animation: keySuccess 0.5s ease;
+}
+
+@keyframes keySuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.key.wrong {
+    background: var(--error) !important;
+}
+
+/* MIDI Log */
+.midi-log {
+    height: 80px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.log-entry {
+    padding: 2px 0;
+}
+
+.log-entry.system { color: var(--accent-color); }
+.log-entry.midi { color: var(--text-secondary); }
+
+/* Buttons */
+footer {
+    display: flex;
+    padding-top: 1rem;
+}
+
+.controls {
+    display: flex;
+    width: 100%;
+    gap: 1rem;
+}
+
+.spacer { flex: 1; }
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn.primary {
+    background: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.btn.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.hidden { display: none !important; }
+
+/* Selection Screen */
+.selection-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 2rem;
+    height: 100%;
+}
+
+.selection-cards {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.instrument-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    width: 280px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.instrument-card:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+}
+
+.instrument-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.card-icon {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+}
+
+.instrument-card h3 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.instrument-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Calibration */
+.calibration-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+}
+
+.calibration-header {
+    text-align: center;
+}
+
+.calibration-visual {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px var(--accent-glow);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px var(--accent-glow); }
+    50% { box-shadow: 0 0 50px var(--accent-glow); }
+    100% { box-shadow: 0 0 20px var(--accent-glow); }
+}
+
+.timer-ring {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-ring svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.timer-ring circle {
+    fill: none;
+    stroke: var(--accent-color);
+    stroke-width: 5;
+    stroke-dasharray: 283; /* 2 * PI * 45 */
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+}
+
+#assessment-timer-text {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
+
+.status-msg {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    animation: fadeInOut 2s infinite;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
