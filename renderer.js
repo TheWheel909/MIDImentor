@@ -3,6 +3,7 @@
 // UI Elements
 const skillQuestionScreen = document.getElementById('skill-question-screen');
 const assessmentScreen = document.getElementById('assessment-screen');
+const libraryScreen = document.getElementById('library-screen');
 const selectionScreen = document.getElementById('selection-screen');
 const calibrationScreen = document.getElementById('calibration-screen');
 const lessonPanel = document.getElementById('lesson-panel');
@@ -23,14 +24,56 @@ const calNoteIndicator = document.getElementById('cal-note-indicator');
 const selectPianoBtn = document.getElementById('select-piano');
 const skillNoBtn = document.getElementById('skill-no');
 const skillYesBtn = document.getElementById('skill-yes');
+const skipToSongsBtn = document.getElementById('skip-to-songs');
+const songGrid = document.getElementById('song-grid');
 const assessmentTimerText = document.getElementById('assessment-timer-text');
 const assessmentTimerPath = document.getElementById('assessment-timer-path');
 const assessmentStatus = document.getElementById('assessment-status');
 
 // Application State
-let appState = 'SKILL_CHECK'; // SKILL_CHECK, RECORDING, SELECTION, CALIBRATING, LESSON
+let appState = 'SKILL_CHECK'; 
 let selectedInstrument = null;
 let midiAccess = null;
+
+// Calibration Data
+let calibration = JSON.parse(localStorage.getItem('miditeacher_cal')) || {
+    step: 0,
+    middleC: 60,
+    lowNote: null,
+    highNote: null
+};
+
+// Lesson Data
+const PIANO_LESSONS = [];
+// Generate 45 lessons + periodic songs
+for (let i = 1; i <= 50; i++) {
+    if (i % 10 === 0) {
+        PIANO_LESSONS.push({
+            title: `Milestone: Song ${i / 10}`,
+            desc: "Let's put it all together! Play this sequence of notes.",
+            sequence: [0, 2, 4, 0, 0, 2, 4, 0], // Frere Jacques start
+            type: 'song'
+        });
+    } else {
+        const offset = (Math.floor(i / 2)) % 12;
+        PIANO_LESSONS.push({
+            offset: offset,
+            title: `Lesson ${i}: New Note`,
+            desc: `Master the ${offset === 0 ? 'C' : 'next'} note in your journey.`
+        });
+    }
+}
+
+const FAMOUS_SONGS = [
+    { title: "Ode to Joy", artist: "Beethoven", sequence: [4, 4, 5, 7, 7, 5, 4, 2, 0, 0, 2, 4, 4, 2, 2], difficulty: "Easy" },
+    { title: "Twinkle Twinkle", artist: "Mozart", sequence: [0, 0, 7, 7, 9, 9, 7, 5, 5, 4, 4, 2, 2, 0], difficulty: "Beginner" },
+    { title: "Fur Elise", artist: "Beethoven", sequence: [16, 15, 16, 15, 16, 11, 14, 12, 9], difficulty: "Intermediate" }
+];
+
+let currentLessonIndex = 0;
+let sequenceIndex = 0; 
+let currentSequence = null; // Holds the active sequence of notes
+const keysMap = new Map();
 
 // Recording Data
 let assessmentData = [];
@@ -38,54 +81,82 @@ let assessmentStartTime = 0;
 let isRecording = false;
 let assessmentTimer = null;
 
-// Calibration Data
-let calibration = {
-    step: 0,
-    middleC: 60,
-    lowNote: null,
-    highNote: null
-};
-
 const CAL_STEPS = [
     { title: "Middle C", desc: "Press Middle C on your piano (the one near the center)." },
     { title: "Lowest Note", desc: "Press the lowest white key on your piano." },
     { title: "Highest Note", desc: "Press the highest white key on your piano." }
 ];
 
-// Lesson Data
-const PIANO_LESSONS = [
-    // Beginning
-    { offset: 0, title: "Lesson 1: Middle C", desc: "Find Middle C and press it. It's the white key just to the left of the group of two black keys." },
-    { offset: 2, title: "Lesson 2: Note D", desc: "Excellent! Now press D. It's the white key in between the two black keys." },
-    { offset: 4, title: "Lesson 3: Note E", desc: "Great! Now press E. It's the white key to the right of the two black keys." },
-    // Intermediate
-    { offset: 7, title: "Lesson 4: Note G", desc: "Moving up! Press G. It's in the group of three black keys." },
-    { offset: 12, title: "Lesson 5: Octave C", desc: "High C! Find the C one octave above Middle C." },
-    // Advanced/Complex
-    { offset: -1, title: "Lesson 6: Note B", desc: "Step down. Press B, the white key just below Middle C." },
-    { offset: 1, title: "Lesson 7: C# (Black Key)", desc: "The first black key in the pair. This is C sharp!" }
-];
-
-let currentLessonIndex = 0;
-const keysMap = new Map();
-
 // --- Initialization ---
 
 function init() {
-    // Starting screen: Selection
-    showScreen(selectionScreen);
-    hideScreen(skillQuestionScreen, calibrationScreen, assessmentScreen, lessonPanel, visualizer, feedbackPanel);
+    // Check for saved calibration
+    const savedCal = localStorage.getItem('miditeacher_cal');
+    const savedInst = localStorage.getItem('miditeacher_inst');
+    
+    if (savedCal && savedInst) {
+        calibration = JSON.parse(savedCal);
+        selectedInstrument = savedInst;
+        log('System: Calibration loaded from memory.', 'system');
+    }
 
+    showScreen(skillQuestionScreen);
+    
     selectPianoBtn.addEventListener('click', () => startCalibration('piano'));
-    skillNoBtn.addEventListener('click', () => finishAppPrep());
-    skillYesBtn.addEventListener('click', () => startAssessment());
+    skillNoBtn.addEventListener('click', () => handleSkillChoice(false));
+    skillYesBtn.addEventListener('click', () => handleSkillChoice(true));
+    skipToSongsBtn.addEventListener('click', () => openLibrary(true));
     resetAppBtn.addEventListener('click', resetToMenu);
     nextLessonBtn.addEventListener('click', advanceLesson);
     initMIDI();
 }
 
+function handleSkillChoice(hasExperience) {
+    if (selectedInstrument && calibration.lowNote) {
+        // We have calibration, jump to assessment or start
+        if (hasExperience) startAssessment();
+        else finishAppPrep();
+    } else {
+        // Need to choose instrument and calibrate first
+        startNormalFlow();
+    }
+}
+
 function resetToMenu() {
     location.reload();
+}
+
+function startNormalFlow() {
+    appState = 'SELECTION';
+    showScreen(selectionScreen);
+}
+
+function startAssessment() {
+    appState = 'RECORDING';
+    showScreen(assessmentScreen);
+    log('System: AI level assessment starting...', 'system');
+}
+
+function openLibrary(skipped = false) {
+    appState = 'LIBRARY';
+    showScreen(libraryScreen);
+    renderLibrary();
+    if (skipped) log('System: Jumped to the good part!', 'system');
+}
+
+function renderLibrary() {
+    songGrid.innerHTML = '';
+    FAMOUS_SONGS.forEach((song, idx) => {
+        const card = document.createElement('div');
+        card.className = 'song-card';
+        card.innerHTML = `
+            <div class="difficulty">${song.difficulty}</div>
+            <h4>${song.title}</h4>
+            <div style="font-size: 0.8rem; color: var(--text-secondary)">${song.artist}</div>
+        `;
+        card.onclick = () => loadSong(song);
+        songGrid.appendChild(card);
+    });
 }
 
 function showScreen(...screens) {
@@ -274,11 +345,16 @@ function processCalibration(note) {
 }
 
 function finishCalibration() {
+    // Save calibration for future sessions
+    localStorage.setItem('miditeacher_cal', JSON.stringify(calibration));
+    localStorage.setItem('miditeacher_inst', selectedInstrument);
+
     appState = 'SKILL_CHECK';
     showScreen(skillQuestionScreen);
     hideScreen(calibrationScreen);
     
     createPiano();
+    log('System: Calibration saved to browser memory.', 'system');
 }
 
 // --- Piano Rendering ---
@@ -312,16 +388,59 @@ function loadLesson(index) {
     lessonDesc.innerText = lesson.desc;
     progressBar.style.width = '0%';
     nextLessonBtn.classList.add('hidden');
+    sequenceIndex = 0;
     
-    // Highlight target note
     keysMap.forEach(k => k.classList.remove('target', 'correct', 'wrong'));
-    const targetNote = calibration.middleC + lesson.offset;
-    const targetKey = keysMap.get(targetNote);
-    if (targetKey) targetKey.classList.add('target');
+    
+    if (lesson.sequence) {
+        currentSequence = lesson.sequence;
+        highlightNextInSequence();
+    } else {
+        currentSequence = null;
+        const targetNote = calibration.middleC + lesson.offset;
+        const targetKey = keysMap.get(targetNote);
+        if (targetKey) targetKey.classList.add('target');
+    }
+}
+
+function loadSong(song) {
+    appState = 'LESSON';
+    showScreen(lessonPanel, visualizer, feedbackPanel);
+    hideScreen(libraryScreen);
+    
+    lessonTitle.innerText = `Learning: ${song.title}`;
+    lessonDesc.innerText = `Follow the highlights to play ${song.title} by ${song.artist}.`;
+    progressBar.style.width = '0%';
+    nextLessonBtn.classList.add('hidden');
+    sequenceIndex = 0;
+    currentSequence = song.sequence;
+    
+    createPiano(); // Ensure keys are there
+    highlightNextInSequence();
+}
+
+function highlightNextInSequence() {
+    keysMap.forEach(k => k.classList.remove('target'));
+    if (currentSequence && sequenceIndex < currentSequence.length) {
+        const targetNote = calibration.middleC + currentSequence[sequenceIndex];
+        const targetKey = keysMap.get(targetNote);
+        if (targetKey) targetKey.classList.add('target');
+    }
 }
 
 function advanceLesson() {
     currentLessonIndex++;
+    
+    // Unlock Library at 45 lessons
+    if (currentLessonIndex === 45) {
+        log('System: 45 Lessons Complete! Song Library Unlocked.', 'system');
+        setTimeout(() => {
+            alert("Congratulations! You've completed 45 lessons and unlocked the Famous Songs library!");
+            openLibrary();
+        }, 800);
+        return;
+    }
+
     if (currentLessonIndex < PIANO_LESSONS.length) {
         loadLesson(currentLessonIndex);
     } else {
@@ -329,6 +448,8 @@ function advanceLesson() {
         lessonDesc.innerText = "You've completed the basic piano lessons. More coming soon!";
         progressBar.style.width = '100%';
         nextLessonBtn.classList.add('hidden');
+        
+        setTimeout(() => openLibrary(), 2000);
     }
 }
 
@@ -337,11 +458,31 @@ function noteOn(note) {
     if (key) {
         key.classList.add('active');
         
-        const targetNote = calibration.middleC + PIANO_LESSONS[currentLessonIndex].offset;
-        if (note === targetNote) {
-            key.classList.add('correct');
-            handleLessonSuccess();
+        let isCorrect = false;
+        if (currentSequence) {
+            const targetNote = calibration.middleC + currentSequence[sequenceIndex];
+            if (note === targetNote) {
+                isCorrect = true;
+                sequenceIndex++;
+                progressBar.style.width = `${(sequenceIndex / currentSequence.length) * 100}%`;
+                
+                if (sequenceIndex >= currentSequence.length) {
+                    key.classList.add('correct');
+                    handleLessonSuccess();
+                } else {
+                    highlightNextInSequence();
+                }
+            }
         } else {
+            const targetNote = calibration.middleC + PIANO_LESSONS[currentLessonIndex].offset;
+            if (note === targetNote) {
+                isCorrect = true;
+                key.classList.add('correct');
+                handleLessonSuccess();
+            }
+        }
+
+        if (!isCorrect) {
             key.classList.add('wrong');
             setTimeout(() => key.classList.remove('wrong'), 500);
         }
