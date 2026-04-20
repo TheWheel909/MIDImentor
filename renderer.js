@@ -36,12 +36,19 @@ let selectedInstrument = null;
 let midiAccess = null;
 
 // Calibration Data
-let calibration = JSON.parse(localStorage.getItem('miditeacher_cal')) || {
+let calibration = {
     step: 0,
     middleC: 60,
     lowNote: null,
     highNote: null
 };
+
+try {
+    const saved = localStorage.getItem('miditeacher_cal');
+    if (saved) calibration = JSON.parse(saved);
+} catch (e) {
+    console.error('Failed to load calibration:', e);
+}
 
 // Lesson Data
 const PIANO_LESSONS = [];
@@ -160,11 +167,33 @@ function renderLibrary() {
 }
 
 function showScreen(...screens) {
-    screens.forEach(s => s.classList.remove('hidden'));
+    // List all main screens
+    const allScreens = [
+        skillQuestionScreen, 
+        assessmentScreen, 
+        selectionScreen, 
+        calibrationScreen, 
+        lessonPanel, 
+        visualizer, 
+        feedbackPanel,
+        libraryScreen
+    ];
+    
+    // Hide all
+    allScreens.forEach(s => {
+        if (s) s.classList.add('hidden');
+    });
+    
+    // Show requested
+    screens.forEach(s => {
+        if (s) s.classList.remove('hidden');
+    });
 }
 
 function hideScreen(...screens) {
-    screens.forEach(s => s.classList.add('hidden'));
+    screens.forEach(s => {
+        if (s) s.classList.add('hidden');
+    });
 }
 
 // --- MIDI Handling ---
